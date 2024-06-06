@@ -33,6 +33,11 @@ const UserSchema = new mongoose.Schema({
     },
   ],
 
+  Wishlist:[{
+    type:mongoose.Schema.Types.ObjectId,
+    ref:"Wishlist"
+  }],
+
   IsDeleted: {
     type: Boolean,
     default: false,

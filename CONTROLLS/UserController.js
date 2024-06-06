@@ -1,4 +1,3 @@
-import { json } from "express";
 import User from "../MODELS/UserModel.js";
 import UserJoi from "../VALIDATION/JoiValidation.js";
 import bcrypt from "bcrypt";
@@ -67,7 +66,7 @@ export const Login = async (req, res, next) => {
         httpOnly: true,
         maxAge: 60 * 60 * 1000,
       })
-      .status(200)
+      .status(200) 
       .json({ message: "User login success jwt", details });
   } catch (error) {
     return res
