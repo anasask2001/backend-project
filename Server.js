@@ -8,6 +8,7 @@ import ProductCartRouter from "./ROUTES/ProductCartRoute.js";
 import mongoose from "mongoose";
 import WishlistRoute from "./ROUTES/WishlistRoute.js";
 import OrderPaymenyRouter from "./ROUTES/PaymentRoute.js";
+import path from 'path'
 
 //dotenv confiuger
 dotenv.config();
@@ -24,6 +25,18 @@ app.use("/api/users", WishlistRoute);
 app.use("/api/users",OrderPaymenyRouter);
 //Admins
 app.use("/api/admin", RouterAdmin);
+
+ 
+//
+app.use(express.static(path.join('Public')));
+
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join("Public","./index.html"));
+});
+
+
+
 //Mongose connecting configure
 mongoose.connect(process.env.DB)
 .then(()=>console.log("DB Connected"))
