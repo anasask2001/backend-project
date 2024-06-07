@@ -7,6 +7,7 @@ import ProductRouter from "./ROUTES/ProductRouter.js";
 import ProductCartRouter from "./ROUTES/ProductCartRoute.js";
 import mongoose from "mongoose";
 import WishlistRoute from "./ROUTES/WishlistRoute.js";
+import OrderPaymenyRouter from "./ROUTES/PaymentRoute.js";
 
 //dotenv confiuger
 dotenv.config();
@@ -19,6 +20,8 @@ app.use("/api/users", RouterUser);
 app.use("/api/users", ProductRouter);
 app.use("/api/users", ProductCartRouter);
 app.use("/api/users", WishlistRoute);
+//payment
+app.use("/api/users",OrderPaymenyRouter);
 //Admins
 app.use("/api/admin", RouterAdmin);
 //Mongose connecting configure
