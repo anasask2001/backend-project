@@ -1,46 +1,50 @@
 import mongoose from "mongoose";
 
-//Order detiles Schema
+// Order details Schema
 const OrderSchema = new mongoose.Schema({
-    UserId:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:"User",
-        required:true
+    UserId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
     },
-    productId:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:"Product",
-        required:true
-    },
-    PurchaseDate:{
+    Products: [{
+        ProductId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Product",
+            required: true
+        },
+        Quantity: {
+            type: Number,
+            required: true
+        }
+    }],
+    PurchaseDate: {
         type: Date,
-        required:true,
-        default:Date.now
+        required: true,
+        default: Date.now
     },
-    OrderTime:{
-        type:String,
-        required:true,
-        default:new Date().toTimeString()
+    OrderTime: {
+        type: String,
+        required: true,
+        default: new Date().toTimeString()
     },
-    OrderId:{
-        type:String,
-        required:true
+    OrderId: {
+        type: String,
+        required: true
     },
-
-    TotalPrice:{
-        type:Number,
-        required:true
+    TotalPrice: {
+        type: Number,
+        required: true
     },
-    TotalItem:{
-        type:Number,
-        required:true
+    TotalItem: {
+        type: Number,
+        required: true
     },
-    PaymentId:{
-        type:String,
-        required:true
+    PaymentId: {
+        type: String,
+        required: true
     }
+});
 
-
-})
 const OrderDetiles = mongoose.model("OrderDetiles", OrderSchema);
 export default OrderDetiles;

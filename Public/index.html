@@ -8,12 +8,30 @@ var options = {
     "name": "RazorPay",
     "description": "Test Transaction",
     "image": "https://example.com/your_logo",
-    "order_id": "order_OLOp2rY5yuUNNG", //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
+    "order_id": "order_OMV5ved7hBGcLV", //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
     "handler": function (response){
         alert(response.razorpay_payment_id);
         alert(response.razorpay_order_id);
-        alert(response.razorpay_signature)
+        alert(response.razorpay_signature);
+        console.log(response.razorpay_payment_id);
+        console.log(response.razorpay_order_id);
+        console.log(response.razorpay_signature);
 
+        // Send these details to the server for verification and order completion
+        fetch('/your-verification-endpoint', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+                userid: 'UserId' 
+            })
+        }).then(res => res.json())
+          .then(data => console.log(data))
+          .catch(error => console.error(error));
     },
     "prefill": {
         "name": "Muhammed Anas",
@@ -29,13 +47,13 @@ var options = {
 };
 var rzp1 = new Razorpay(options);
 rzp1.on('payment.failed', function (response){
-        alert(response.error.code);
-        alert(response.error.description);
-        alert(response.error.source);
-        alert(response.error.step);
-        alert(response.error.reason);
-        alert(response.error.metadata.order_id);
-        alert(response.error.metadata.payment_id);
+    alert(response.error.code);
+    alert(response.error.description);
+    alert(response.error.source);
+    alert(response.error.step);
+    alert(response.error.reason);
+    alert(response.error.metadata.order_id);
+    alert(response.error.metadata.payment_id);
 });
 document.getElementById('rzp-button1').onclick = function(e){
     rzp1.open();

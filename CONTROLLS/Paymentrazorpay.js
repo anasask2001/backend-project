@@ -2,9 +2,8 @@ import Razorpay from "razorpay";
 import User from "../MODELS/UserModel.js";
 import crypto from "crypto";
 import dotenv from "dotenv";
-import path from "path";
 import OrderDetiles from "../MODELS/Orders.js";
-import Product from "../MODELS/ProductModel.js";
+
 
 dotenv.config();
 
@@ -14,7 +13,7 @@ export const payment = async (req, res, next) => {
     const userid = req.params.userid;
     const user = await User.findById(userid).populate({
       path: "Cart",
-      populate: { path: "ProductId" },
+      populate: { path: "ProductId" }
     });
 
     if (!user) {
@@ -40,7 +39,7 @@ export const payment = async (req, res, next) => {
       key_secret: process.env.KEY_SECRET,
     });
 
-    try {
+    
       const payment = await Razorpayinstance.orders.create({
         amount: totalamount * 100, //  (convert from INR)
         currency: "INR",
@@ -70,12 +69,7 @@ export const payment = async (req, res, next) => {
 //payment order verification 
 export const VerifyPayment = async (req, res, next) => {
   try {
-    const {
-      razorpay_payment_id,
-      razorpay_order_id,
-      razorpay_signature,
-      userid,
-    } = req.body;
+    const { razorpay_payment_id, razorpay_order_id, razorpay_signature, userid } = req.body;
 
     const key_secret = process.env.KEY_SECRET;
     const expectedSignature = crypto
@@ -83,39 +77,47 @@ export const VerifyPayment = async (req, res, next) => {
       .update(razorpay_order_id + "|" + razorpay_payment_id)
       .digest("hex");
 
+    console.log("Expected Signature:", expectedSignature);
+    console.log("Received Signature:", razorpay_signature);
+
     if (razorpay_signature !== expectedSignature) {
-      return res
-        .status(404)
-        .json({ status: "failure..", message: "INVALID SIGNATURE.." });
-    } else {
-      const user = await User.findById(userid).populate({
-        path: "Cart",
-        populate: { path: "ProductId" },
-      });
-      if (!user) {
-        return res.status(404).json({ message: "USER NOT FOUND" });
-      }
-      const Order = new OrderDetiles({
-        UserId: user._id,
-
-        Product: user.Cart.map((item) => ({
-          ProductId: item.Product._id,
-          Quantity: item.Quantity,
-        })),
-
-        PaymentId: razorpay_payment_id,
-        OrderId: razorpay_order_id,
-      });
-
-      await Order.save();
-      //clear user cart
-      user.Cart = [];
-
-      await user.save();
-
-      return res.status(200).json({ message: "Sucess ordered", Order });
+      return res.status(400).json({ status: "failure", message: "Invalid signature" });
     }
+
+    const user = await User.findById(userid).populate({
+      path: "Cart",
+      populate: { path: "ProductId" },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const orderItems = user.Cart.map((item) => ({
+      ProductId: item.ProductId._id,
+      Quantity: item.Quantity,
+    }));
+
+    const totalamount = orderItems.reduce((sum, item) => sum + (item.Quantity * item.ProductId.ProductPrice), 0);
+
+    const order = new OrderDetiles({
+      UserId: user._id,
+      Products: orderItems,
+      PaymentId: razorpay_payment_id,
+      OrderId: razorpay_order_id,
+      TotalPrice: totalamount,
+      TotalItem: orderItems.length,
+    });
+
+    await order.save();
+
+    // Clear user's cart
+    user.Cart = [];
+    await user.save();
+
+    return res.status(200).json({ status: "success", message: "Order placed successfully", order });
   } catch (error) {
-    next(error);
+    console.error("Error in VerifyPayment:", error);
+    return res.status(500).json({ status: "error", message: "Internal server error", error: error.message });
   }
 };
