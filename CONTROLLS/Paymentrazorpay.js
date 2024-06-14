@@ -98,7 +98,7 @@ export const VerifyPayment = async (req, res, next) => {
       const Order = new OrderDetiles({
         UserId: user._id,
 
-        ProductId: user.Cart.map((item) => ({
+        Product: user.Cart.map((item) => ({
           ProductId: item.Product._id,
           Quantity: item.Quantity,
         })),
