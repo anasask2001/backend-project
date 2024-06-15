@@ -36,6 +36,7 @@ export let AddToCart = async (req, res, next) => {
         ProductId,
         Quantity: 1,
       });
+      console.log(Cartproduct);
       //push the cart Item user cart
       user.Cart.push(Cartproduct._id);
       //saving the cart to user
@@ -67,12 +68,12 @@ console.log(user);
     }
 
 
-    if(!user.Cart || user.Cart.length==0){
+    if( user.Cart.length==0){
       return res.status(200).json({message:"Cart Is Empty",data:[]})
     }
     return res.status(200).json(user.Cart)
   } catch (error) {
-    next(error)
+    next(error) 
   }
 }
 

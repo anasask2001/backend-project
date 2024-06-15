@@ -1,11 +1,15 @@
 import Razorpay from "razorpay";
 import User from "../MODELS/UserModel.js";
-import crypto from "crypto";
 import dotenv from "dotenv";
-import OrderDetiles from "../MODELS/Orders.js";
-
+import OrderDetails from "../MODELS/Orders.js";
+import crypto, { Hmac } from "crypto"
 
 dotenv.config();
+
+const razorpayInstance = new Razorpay({
+  key_id: process.env.ID_KEY,
+  key_secret: process.env.KEY_SECRET,
+});
 
 // PAYMENT SECTION
 export const payment = async (req, res, next) => {
@@ -13,7 +17,7 @@ export const payment = async (req, res, next) => {
     const userid = req.params.userid;
     const user = await User.findById(userid).populate({
       path: "Cart",
-      populate: { path: "ProductId" }
+      populate: { path: "ProductId" },
     });
 
     if (!user) {
@@ -34,18 +38,20 @@ export const payment = async (req, res, next) => {
       totalquantity += item.Quantity;
     });
 
-    var Razorpayinstance = new Razorpay({
-      key_id: process.env.ID_KEY,
-      key_secret: process.env.KEY_SECRET,
-    });
+   
 
-    
-      const payment = await Razorpayinstance.orders.create({
-        amount: totalamount * 100, //  (convert from INR)
-        currency: "INR",
-        receipt: `receipt_order_${userid}`,
-        payment_capture: 1,
-      });
+    const options = {
+      amount: totalamount * 100, // convert to paise (smallest currency unit in INR)
+      currency: "INR",
+      receipt: `receipt_order_${userid}`,
+      notes: {
+        userid: userid,
+      },
+      payment_capture: 1,
+    };
+
+    try {
+      const payment = await razorpayInstance.orders.create(options);
 
       return res.json({
         status: "success",
@@ -65,42 +71,44 @@ export const payment = async (req, res, next) => {
   }
 };
 
-
 //payment order verification 
 export const VerifyPayment = async (req, res, next) => {
   try {
-    const { razorpay_payment_id, razorpay_order_id, razorpay_signature, userid } = req.body;
-
+    
     const key_secret = process.env.KEY_SECRET;
-    const expectedSignature = crypto
-      .createHmac("sha256", key_secret)
+    const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body;
+
+    const expectedSignature = crypto.createHmac("sha256", key_secret)
       .update(razorpay_order_id + "|" + razorpay_payment_id)
-      .digest("hex");
+       .digest("hex");
 
     console.log("Expected Signature:", expectedSignature);
     console.log("Received Signature:", razorpay_signature);
 
+
+
+
     if (razorpay_signature !== expectedSignature) {
       return res.status(400).json({ status: "failure", message: "Invalid signature" });
     }
-
-    const user = await User.findById(userid).populate({
-      path: "Cart",
-      populate: { path: "ProductId" },
-    });
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    const Order = await razorpayInstance.orders.fetch(razorpay_order_id);
+    
+    const user = await User.findById(Order.notes.userid).populate({path:"Cart",populate:{path:"ProductId"}});
 
     const orderItems = user.Cart.map((item) => ({
       ProductId: item.ProductId._id,
       Quantity: item.Quantity,
+      ProductPrice: item.ProductId.ProductPrice, // Include ProductPrice in the mapping
     }));
-
-    const totalamount = orderItems.reduce((sum, item) => sum + (item.Quantity * item.ProductId.ProductPrice), 0);
-
-    const order = new OrderDetiles({
+    
+    const totalamount = orderItems.reduce((sum, item) => sum + (item.Quantity * item.ProductPrice), 0);
+    
+    // Validate totalamount before proceeding
+    if (isNaN(totalamount)) {
+      throw new Error('Total amount calculation resulted in NaN');
+    }
+    
+    const order = new OrderDetails({
       UserId: user._id,
       Products: orderItems,
       PaymentId: razorpay_payment_id,
@@ -108,6 +116,12 @@ export const VerifyPayment = async (req, res, next) => {
       TotalPrice: totalamount,
       TotalItem: orderItems.length,
     });
+    
+    await order.save().catch(err => {
+      console.error('Error saving order details:', err);
+    });
+    
+
 
     await order.save();
 
