@@ -121,10 +121,10 @@ export const VerifyPayment = async (req, res, next) => {
       console.error('Error saving order details:', err);
     });
     
-
-
+ 
+    user.Order.push(order)
     await order.save();
-
+  
     // Clear user's cart
     user.Cart = [];
     await user.save();
