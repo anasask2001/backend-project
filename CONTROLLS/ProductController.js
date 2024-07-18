@@ -1,6 +1,6 @@
 import { errorHandler } from "../MIDDLEWARE/Errors.js";
 import Product from "../MODELS/ProductModel.js";
-import User from "../MODELS/UserModel.js";
+
 
 //View all products
 export const AllProducts = async (req, res, next) => {
@@ -16,14 +16,29 @@ export const AllProducts = async (req, res, next) => {
        return next(errorHandler, (404, "Unable to get product", error));
   }
 };
+
+
 //find product Id used
-export const FindProductById = async (req, res, next) => {
+export const FindProductById = async (req, res) => {
   try {
-    const Productid = await Product.findById(req.params.id);
-    return res.status(200).json({ Productid });
-  } catch (error) {
-    return res.status(400).json({ message: "Not Found Product This Id" });
-  }
+    const { id } = req.params;
+        try {
+            // Find the product by ID
+            const findProduct = await Product.findById(id);
+            
+            if (!findProduct) {
+                return res.status(404).json({ message: "Product not found" });
+            }
+            
+            res.status(200).json({ product: findProduct });
+        } catch (error) {
+            return res.status(404).json({messsage:"Unable to get products",error});
+            next(error);
+        }
+} catch (error) {  
+    return res.status(404).json({messsage:"Unable to get products",error});
+ 
+}
 };
 //Find product By category
 export const FindByCategory = async (req, res, next) => {
@@ -36,7 +51,7 @@ export const FindByCategory = async (req, res, next) => {
         { ProductCategory: { $regex: new RegExp(categoryname, "i") } },
         { ProductTitle: { $regex: new RegExp(categoryname, "i") } },
       ],
-    }).select("ProductTitle  ProductPrice   ProductCategory");
+    }).select("ProductTitle  ProductPrice   ProductCategory ProductDescription ProductImage");
     if (category.length === 0) {
       return res.status(404).json("NO ITEM FOUND");
     }
@@ -45,3 +60,5 @@ export const FindByCategory = async (req, res, next) => {
     return res.status(404).json("server error");
   }
 };
+
+

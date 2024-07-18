@@ -1,24 +1,26 @@
-import Jwt from "jsonwebtoken";
-import dotenv from "dotenv";
-dotenv.config();
+import jwt from "jsonwebtoken"
+import dotenv from "dotenv"
 
-export const UserToken = (req, res, next) => {
-  try {
-    const token = req.headers["authorization"];
-    if (!token) {
-      return res.status(403).json({ message: "Token not provided" });
-    }
-    Jwt.verify(token, process.env.Token_secret_Key, (err, decode) => {
-      if (err) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-      req.email = decode.email;
-      next();
-    });
-  } catch (error) {
-    return res.status(500).json({ message: "Server error" });
-    next(error);
-  }
-};
+dotenv.config
 
-export default UserToken;
+export const UserToken= (req,res,next)=>{
+    try{
+        const token =req.headers["authorization"];
+
+        if(!token){
+           return res.status(403).json({message:"token is not provided"})
+        }
+        jwt.verify(token,process.env.User_Token_secret_Key,(err,decode)=>{
+            if(err){
+                return res.status(401).json({message:"Unauthorized"})
+            }
+            req.email = decode.email;
+            next();
+        })
+
+    }catch(error){
+        return next(error)
+    }
+}
+
+export default UserToken

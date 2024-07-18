@@ -23,7 +23,7 @@ export let AddToCart = async (req, res, next) => {
       UserId: UserId,
       ProductId: ProductId,
     });
-    console.log(Cartproduct);
+
     if (Cartproduct) {
       //If product is already carted only add the quatity increament
       Cartproduct.Quantity++;
@@ -36,13 +36,13 @@ export let AddToCart = async (req, res, next) => {
         ProductId,
         Quantity: 1,
       });
-      console.log(Cartproduct);
+
       //push the cart Item user cart
       user.Cart.push(Cartproduct._id);
       //saving the cart to user
       await user.save();
       return res
-        .status(200)      
+        .status(200)
         .json({ message: "Product Is carted Successfully" });
     }
   } catch (error) {
@@ -50,144 +50,135 @@ export let AddToCart = async (req, res, next) => {
   }
 };
 
-
 //view user cart
-export const ViewCart = async (req,res,next)=>{
+export const ViewCart = async (req, res, next) => {
   try {
-    const{userid}=req.params
-    const user = await User.findById(userid)
-    .populate({
-      path:"Cart",
-      populate:{path:"ProductId"}
-    })
+    const { userid } = req.params;
+    const user = await User.findById(userid).populate({
+      path: "Cart",
+      populate: { path: "ProductId" },
+    });
 
-console.log(user);
-
-    if(!user){
-      return res.status(404).json({message:"USER NOT FOUND"})
+    if (!user) {
+      return res.status(404).json({ message: "USER NOT FOUND" });
     }
 
-
-    if( user.Cart.length==0){
-      return res.status(200).json({message:"Cart Is Empty",data:[]})
+    if (user.Cart.length == 0) {
+      return res.status(200).json({ message: "Cart Is Empty", data: [] });
     }
-    return res.status(200).json(user.Cart)
+
+    return res.status(200).json(user.Cart);
   } catch (error) {
-    next(error) 
+    next(error);
   }
-}
-
+};
 
 //increament cart item
-export const IncreamentcartItem = async(req,res,next)=>{
+export const IncreamentcartItem = async (req, res, next) => {
   try {
-  //Taking user id   
-  const userid=req.params.userid
-  //taking product id
-  const productid=req.params.productid
-  //taking count in body
-  const {Increamentitem} = req.body
-console.log(Increamentitem);
-//checking userid
-  if(!userid){
-    return res.status(404).json({message:"USER NOT FOUND"})
-  }
-//checking productid
-  if(!productid){
-    return res.status(404).json({message:"PRODUCT NOT FOUND"})
-  }
-  
-//finding product id and product id
-  const cartitem = await Cart.findOne({userid:userid._id,productid:productid._id})
-  if(cartitem){
-    //not a number show alert
-    if(typeof Increamentitem !== "number"){
-      return res.status(404).json({message:"MUST BE NUMBERS"})
-    }else{
-      //otherwise Add count
-      cartitem.Quantity+=Increamentitem
-      await cartitem.save()
+    //Taking user id
+    
+    const userid = req.params.userid;
+    //taking product id
+    const productid = req.params.productid;
+    //checking userid
+    if (!userid) {
+      return res.status(404).json({ message: "USER NOT FOUND" });
     }
-  }
-    res.status(200).json({message:"QUANTITY INCREAMENTED"})
+    //checking productid
+    if (!productid) {
+      return res.status(404).json({ message: "PRODUCT NOT FOUND" });
+    }
 
+    //finding product id and product id
+    const cartitem = await Cart.findOne({
+      UserId:userid,
+      ProductId:productid
+    });
+
+    
+
+    if (!cartitem) {
+      res.status(404).json({ message: "Product Not Found" });
+    }
+
+    cartitem.Quantity++;
+    await cartitem.save();
+
+    
+    res.status(200).json({ message: "QUANTITY INCREAMENTED" });
   } catch (error) {
-    console.error("error:",error)
-    next(error)
+    next(error);
   }
-}
+};
+
+
 
 //Decreament cart item
-export const DecreamentcartItem = async (req,res,next)=>{
+export const DecreamentcartItem = async (req, res, next) => {
   try {
     //take user id
-    const userid=req.params.userid
-     //take product id
-    const productid=req.params.productid
-    //take count body
-    const {decreamnetitem } = req.body
-
-
+    const userid = req.params.userid;
+    //take product id
+    const productid = req.params.productid;
     //check user id
-    if(!userid){
-      return res.status(404).json({message:"USER NOT FOUND"})
+    if (!userid) {
+      return res.status(404).json({ message: "USER NOT FOUND" });
     }
-   //check product id
-    if(!productid){
-      return res.status(404).json({message:"PRODUCT NOT FOUND"})
+    //check product id
+    if (!productid) {
+      return res.status(404).json({ message: "PRODUCT NOT FOUND" });
     }
+
     //finding the userid and product id
-    const cartitem = await Cart.findOne({userid:userid._id,productid:productid._id})
-console.log(decreamnetitem);
-    if(cartitem){
-      //not a number show alert
-      if(typeof decreamnetitem !== "number"){
-        return res.status(404).json({message:"MUST BE NUMBERS"})
-      }
-       if(cartitem.Quantity > 1){
-        cartitem.Quantity-=decreamnetitem    
-        await cartitem.save()  
-      }else{
-        cartitem.Quantity = 1
-        await cartitem.save()  
-      }
+    const cartitem = await Cart.findOne({
+      UserId: userid,
+      ProductId: productid,
+    });
+
+    if (cartitem.Quantity > 1) {
+      cartitem.Quantity--;
+      await cartitem.save();
+      return res.status(200).json({ message: "QUANTITY DECREAMENTED" });
+    } else {
+      cartitem.Quantity = 1;
+      await cartitem.save();
     }
-    res.status(200).json({message:"QUANTITY DECREAMENTED"})
-  
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
-export const DeleteCart  = async (req,res,next)=>{
- try {
-  const userid = req.params.userid
-  const productid =req.params.productid
+//delete Cart item
+export const DeleteCart = async (req, res, next) => {
+  try {
+    const userid = req.params.userid;
+    const productid = req.params.productid;
 
-  const user = await User.findById(userid)
-  if(!user){
-    return res.status(404).json({message:"user not found"})
-    
+    const user = await User.findById(userid);
+    if (!user) {
+      return res.status(404).json({ message: "user not found" });
+    }
+
+    const product = await Product.findById(productid);
+    if (!product) {
+      return res.status(404).json({ message: "product not found" });
+    }
+
+    const deleteproduct = await Cart.findOneAndDelete({
+      UserId: user._id,
+      ProductId: product._id,
+    });
+    const cart_index = user.Cart.findIndex((item) =>
+      item.equals(deleteproduct._id)
+    );
+
+    if (cart_index !== -1) {
+      user.Cart.splice(cart_index, 1);
+      await user.save();
+      return res.status(200).json({ message: "product deleted" });
+    }
+  } catch (error) {
+    next(error);
   }
-
-
-  const product = await Product.findById(productid)
-  if(!product){
-    return res.status(404).json({message:"product not found"})
-  }
- 
-
- const deleteproduct = await Cart.findOneAndDelete({ UserId:user._id, ProductId:product._id})
- const cart_index = user.Cart.findIndex(item =>item.equals(deleteproduct._id))
-
- if(cart_index !== -1){
-  user.Cart.splice(cart_index,1)
-  await user.save()
-  return res.status(200).json({message:"product deleted"})
- }
-  
- } catch (error) {
-  next(error)
- }
-
-}
+};

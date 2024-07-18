@@ -9,14 +9,24 @@ import mongoose from "mongoose";
 import WishlistRoute from "./ROUTES/WishlistRoute.js";
 import OrderPaymenyRouter from "./ROUTES/PaymentRoute.js";
 import path from 'path'
+import cores from "cors"
 
 //dotenv confiuger
 dotenv.config();
 const app = express();
 //configure bodyprser
+
 app.use(express.json());
 app.use(cookieParser());
 //Users
+
+
+//cores
+app.use(cores({
+  origin:"http://localhost:3000",
+  credentials:true
+}))
+
 app.use("/api/users", RouterUser);
 app.use("/api/users", ProductRouter);
 app.use("/api/users", ProductCartRouter);
@@ -24,16 +34,10 @@ app.use("/api/users", WishlistRoute);
 //payment
 app.use("/api/users",OrderPaymenyRouter);
 //Admins
-app.use("/api/admin", RouterAdmin);
+app.use("/api/admin",RouterAdmin);
 
  
-//
-app.use(express.static(path.join('Public')));
 
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join("Public","./index.html"));
-});
 
 
 

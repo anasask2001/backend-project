@@ -15,6 +15,7 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  
 
   ProfileImg: {
     type: String,
@@ -44,7 +45,7 @@ const UserSchema = new mongoose.Schema({
   },
   Order:[{
     type: mongoose.Schema.Types.ObjectId,
-    ref:"Order"
+    ref:"OrderDetiles"
   }]
 });
 const User = mongoose.model("User", UserSchema);
